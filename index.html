@@ -402,8 +402,8 @@ async function generateSession() {
     roomUrl = `https://abriblue-sav.daily.co/${roomName}`;
   }
 
-  // Le lien client pointe directement vers la salle Daily
-  const clientLink = roomUrl;
+  // Le lien client pointe vers client.html avec la salle en paramètre
+  const clientLink = `${CLIENT_PAGE_BASE}?room=${encodeURIComponent(roomUrl)}`;
   document.getElementById('sessionLink').textContent = clientLink;
 
   const el = document.getElementById('sessionResult');
