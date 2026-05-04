@@ -233,19 +233,8 @@ async function initClient(roomUrl) {
       iframeStyle: { position:'absolute', inset:'0', width:'100%', height:'100%', border:'none' },
       showLeaveButton: false,
       showFullscreenButton: false,
-      dailyConfig: {
-        experimentalChromeVideoMuteLightOff: true,
-      },
     }
   );
-
-  // Force l'attribut allow sur l'iframe générée par Daily (fix iOS Safari)
-  setTimeout(() => {
-    const iframe = document.getElementById('dailyContainer').querySelector('iframe');
-    if (iframe) {
-      iframe.allow = 'camera; microphone; autoplay; display-capture; fullscreen';
-    }
-  }, 500);
 
   callFrame.on('joined-meeting', () => {
     document.getElementById('waitingScreen').classList.add('hidden');
