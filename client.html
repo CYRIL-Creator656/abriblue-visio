@@ -198,6 +198,10 @@ body {
 
 <script src="https://unpkg.com/@daily-co/daily-js"></script>
 <script>
+let callFrame = null;
+let muted = false, camOff = false;
+let canvas, ctx;
+
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
 
@@ -205,13 +209,8 @@ if (!roomParam) {
   document.getElementById('errorScreen').classList.add('show');
   document.getElementById('waitingScreen').classList.remove('show');
 } else {
-  // roomParam est l'URL Daily complète (ex: https://abriblue-sav.daily.co/abriblue-xxx)
   initClient(decodeURIComponent(roomParam));
 }
-
-let callFrame = null;
-let muted = false, camOff = false;
-let canvas, ctx;
 
 async function initClient(roomUrl) {
   // Init canvas
