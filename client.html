@@ -198,10 +198,6 @@ body {
 
 <script src="https://unpkg.com/@daily-co/daily-js"></script>
 <script>
-// L'URL Daily vient du paramètre ?room=NOM_DE_SALLE dans l'URL
-// Ex: client.html?room=abriblue-abc123
-const DAILY_DOMAIN = 'abriblue-sav';
-
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
 
@@ -209,8 +205,8 @@ if (!roomParam) {
   document.getElementById('errorScreen').classList.add('show');
   document.getElementById('waitingScreen').classList.remove('show');
 } else {
-  const roomUrl = `https://${DAILY_DOMAIN}.daily.co/${roomParam}`;
-  initClient(roomUrl);
+  // roomParam est l'URL Daily complète (ex: https://abriblue-sav.daily.co/abriblue-xxx)
+  initClient(decodeURIComponent(roomParam));
 }
 
 let callFrame = null;

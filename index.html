@@ -354,7 +354,7 @@ input[type=range].sz::-webkit-slider-thumb { -webkit-appearance:none; width:13px
 // ─────────────────────────────────────────
 // CONFIG — remplace par ta vraie clé API
 // ─────────────────────────────────────────
-const DAILY_API_KEY = '44d97bb628cc1cf99c6c38df4458a9543b0dad62492985067c3f3adcfda5fcc0';
+const DAILY_API_KEY = 'VOTRE_CLE_API_DAILY';
 
 // L'URL de base de ta page client sur GitHub Pages
 // Ex: 'https://ton-pseudo.github.io/abriblue-visio/client.html'
@@ -402,8 +402,8 @@ async function generateSession() {
     roomUrl = `https://abriblue.daily.co/${roomName}`;
   }
 
-  // Le lien client pointe vers client.html avec le nom de la salle en paramètre
-  const clientLink = `${CLIENT_PAGE_BASE}?room=${roomName}`;
+  // Le lien client pointe vers client.html avec l'URL complète de la salle
+  const clientLink = `${CLIENT_PAGE_BASE}?room=${encodeURIComponent(roomUrl)}`;
   document.getElementById('sessionLink').textContent = clientLink;
 
   const el = document.getElementById('sessionResult');
