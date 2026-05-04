@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Abriblue · Visio-assistance</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #0a1520;
+  color: white;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* HEADER */
+.header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(10,21,32,0.9);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  z-index: 10;
+}
+.logo { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.8); }
+.logo span { color: #ef7a91; }
+.status-chip {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.65rem; font-weight: 700;
+  color: #4ade80; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.status-dot { width:6px; height:6px; border-radius:50%; background:#4ade80; animation:blink 1.2s infinite; }
+.status-dot.waiting { background: #ef7a91; animation: none; opacity: 0.7; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ZONE VIDÉO + CANVAS */
+.video-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #060e17;
+}
+
+/* Daily iframe plein écran */
+#dailyContainer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Canvas annotation par-dessus — pointer-events:none car le client ne dessine pas */
+#annoCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Écran d'attente */
+.waiting-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #0a1520;
+  text-align: center;
+  padding: 32px;
+  transition: opacity 0.4s;
+}
+.waiting-screen.hidden { opacity: 0; pointer-events: none; }
+
+.waiting-icon {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: rgba(239,122,145,0.1);
+  border: 1px solid rgba(239,122,145,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+}
+.waiting-title { font-size: 1.1rem; font-weight: 700; color: white; }
+.waiting-sub { font-size: 0.8rem; color: rgba(200,217,241,0.4); line-height: 1.6; max-width: 280px; }
+
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(239,122,145,0.15);
+  border-top-color: #ef7a91;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Message d'erreur */
+.error-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0a1520;
+  text-align: center;
+  padding: 32px;
+}
+.error-screen.show { display: flex; }
+.error-title { font-size: 1rem; font-weight: 700; color: #ef7a91; }
+.error-sub { font-size: 0.8rem; color: rgba(200,217,241,0.4); line-height: 1.6; max-width: 280px; }
+
+/* Barre bas */
+.bottom-bar {
+  padding: 12px 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(10,21,32,0.95);
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+}
+
+.ctrl-btn {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  transition: all 0.15s;
+  background: rgba(255,255,255,0.08);
+  color: rgba(200,217,241,0.7);
+}
+.ctrl-btn:hover { background: rgba(255,255,255,0.14); }
+.ctrl-btn.active { background: rgba(239,122,145,0.2); color: #ef7a91; }
+
+.hint {
+  text-align: center;
+  font-size: 0.68rem;
+  color: rgba(200,217,241,0.2);
+  padding: 0 16px 12px;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Abri<span>blue</span> · Visio SAV</div>
+  <div class="status-chip" id="statusChip">
+    <div class="status-dot waiting" id="statusDot"></div>
+    <span id="statusLabel">Connexion…</span>
+  </div>
+</div>
+
+<div class="video-wrap">
+  <!-- Daily.js injecte la vidéo ici -->
+  <div id="dailyContainer"></div>
+
+  <!-- Canvas pour recevoir et afficher les annotations du technicien -->
+  <canvas id="annoCanvas"></canvas>
+
+  <!-- Écran d'attente -->
+  <div class="waiting-screen" id="waitingScreen">
+    <div class="waiting-icon">📹</div>
+    <div class="waiting-title">Connexion en cours…</div>
+    <div class="waiting-sub">Autorise l'accès à ta caméra quand ton navigateur te le demande</div>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Écran d'erreur -->
+  <div class="error-screen" id="errorScreen">
+    <div style="font-size:2rem">⚠️</div>
+    <div class="error-title">Lien invalide ou expiré</div>
+    <div class="error-sub">Ce lien n'est plus valide. Contacte ton technicien Abriblue pour obtenir un nouveau lien.</div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Micro">🎤</button>
+  <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Caméra">📷</button>
+</div>
+
+<div class="hint">Pointe ta caméra vers ce que tu veux montrer au technicien</div>
+
+<script src="https://unpkg.com/@daily-co/daily-js"></script>
+<script>
+// L'URL Daily vient du paramètre ?room=NOM_DE_SALLE dans l'URL
+// Ex: client.html?room=abriblue-abc123
+const DAILY_DOMAIN = 'abriblue'; // abriblue-sav
+
+const params = new URLSearchParams(window.location.search);
+const roomParam = params.get('room');
+
+if (!roomParam) {
+  document.getElementById('errorScreen').classList.add('show');
+  document.getElementById('waitingScreen').classList.remove('show');
+} else {
+  const roomUrl = `https://${DAILY_DOMAIN}.daily.co/${roomParam}`;
+  initClient(roomUrl);
+}
+
+let callFrame = null;
+let muted = false, camOff = false;
+let canvas, ctx;
+
+async function initClient(roomUrl) {
+  // Init canvas
+  canvas = document.getElementById('annoCanvas');
+  const wrap = canvas.parentElement;
+  function resizeCanvas() {
+    canvas.width = wrap.offsetWidth;
+    canvas.height = wrap.offsetHeight;
+    if(ctx) { ctx.lineCap='round'; ctx.lineJoin='round'; }
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  ctx = canvas.getContext('2d');
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  // Init Daily
+  callFrame = window.DailyIframe.createFrame(
+    document.getElementById('dailyContainer'),
+    {
+      iframeStyle: { position:'absolute', inset:'0', width:'100%', height:'100%', border:'none' },
+      showLeaveButton: false,
+      showFullscreenButton: false,
+    }
+  );
+
+  callFrame.on('joined-meeting', () => {
+    document.getElementById('waitingScreen').classList.add('hidden');
+    document.getElementById('statusDot').classList.remove('waiting');
+    document.getElementById('statusLabel').textContent = 'En direct';
+  });
+
+  callFrame.on('error', () => {
+    document.getElementById('waitingScreen').classList.add('hidden');
+    document.getElementById('errorScreen').classList.add('show');
+  });
+
+  // Reçoit les annotations du technicien et les dessine sur le canvas
+  callFrame.on('app-message', (e) => {
+    if (e.data && e.data.type === 'anno') applyStroke(e.data);
+  });
+
+  try {
+    await callFrame.join({ url: roomUrl, userName: 'Client' });
+  } catch(err) {
+    document.getElementById('waitingScreen').classList.add('hidden');
+    document.getElementById('errorScreen').classList.add('show');
+    console.error(err);
+  }
+}
+
+// Dessine les annotations reçues du technicien
+function applyStroke(d) {
+  if (!ctx) return;
+  const W = canvas.width, H = canvas.height;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  if (d.action === 'start') {
+    ctx.beginPath();
+    ctx.moveTo(d.x*W, d.y*H);
+  } else if (d.action === 'move') {
+    if (d.tool === 'pen') {
+      ctx.lineWidth = d.size;
+      ctx.strokeStyle = d.color;
+      ctx.lineTo(d.x*W, d.y*H);
+      ctx.stroke();
+    } else if (d.tool === 'eraser') {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = d.size * 5;
+      ctx.lineTo(d.x*W, d.y*H);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  } else if (d.action === 'shape') {
+    ctx.strokeStyle = d.color;
+    ctx.lineWidth = d.size;
+    ctx.beginPath();
+    const x1=d.x0*W, y1=d.y0*H, x2=d.x*W, y2=d.y*H;
+    if (d.tool === 'arrow') {
+      const h = Math.max(14, d.size*4), a = Math.atan2(y2-y1, x2-x1);
+      ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a-Math.PI/6), y2-h*Math.sin(a-Math.PI/6));
+      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a+Math.PI/6), y2-h*Math.sin(a+Math.PI/6));
+      ctx.stroke();
+    } else if (d.tool === 'circle') {
+      const cx=(x1+x2)/2, cy=(y1+y2)/2;
+      ctx.ellipse(cx,cy,Math.abs(x2-x1)/2,Math.abs(y2-y1)/2,0,0,2*Math.PI);
+      ctx.stroke();
+    } else if (d.tool === 'rect') {
+      ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+    }
+  } else if (d.action === 'text') {
+    ctx.font = `bold ${Math.max(14,d.size*5)}px Plus Jakarta Sans,sans-serif`;
+    ctx.fillStyle = d.color;
+    ctx.fillText(d.text, d.x*W, d.y*H);
+  } else if (d.action === 'clear') {
+    ctx.clearRect(0, 0, W, H);
+  }
+}
+
+function toggleMute() {
+  if (!callFrame) return;
+  muted = !muted;
+  callFrame.setLocalAudio(!muted);
+  const btn = document.getElementById('muteBtn');
+  btn.textContent = muted ? '🔇' : '🎤';
+  btn.classList.toggle('active', muted);
+}
+function toggleCam() {
+  if (!callFrame) return;
+  camOff = !camOff;
+  callFrame.setLocalVideo(!camOff);
+  const btn = document.getElementById('camBtn');
+  btn.textContent = camOff ? '📵' : '📷';
+  btn.classList.toggle('active', camOff);
+}
+</script>
+</body>
+</html>

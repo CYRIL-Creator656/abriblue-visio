@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abriblue · Visio SAV — Technicien</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rose: #ef7a91;
+  --rose-light: #fde8ed;
+  --rose-mid: #f9c5cf;
+  --blue-dark: #23394c;
+  --blue-mid: #c8d9f1;
+  --blue-pale: #eef4fd;
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface2: #f9fafb;
+  --text: #1a2733;
+  --text-mid: #5a6e7d;
+  --text-light: #98aab5;
+  --border: #e8edf2;
+  --shadow-sm: 0 1px 3px rgba(35,57,76,0.06), 0 1px 2px rgba(35,57,76,0.04);
+  --shadow: 0 4px 16px rgba(35,57,76,0.08), 0 1px 4px rgba(35,57,76,0.04);
+  --shadow-lg: 0 12px 40px rgba(35,57,76,0.12), 0 4px 12px rgba(35,57,76,0.06);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+/* HEADER */
+.header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 20px; display:flex; align-items:center; justify-content:space-between; height:60px; position:sticky; top:0; z-index:100; }
+.logo-name { font-size:0.95rem; font-weight:700; color:var(--text); letter-spacing:0.02em; }
+.header-badge { background:var(--rose-light); color:var(--rose); font-size:0.65rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:4px 10px; border-radius:20px; }
+
+/* NAV */
+.nav { background:var(--surface); border-bottom:1px solid var(--border); display:flex; padding:0 20px; gap:4px; }
+.nav-tab { padding:12px 16px; font-size:0.78rem; font-weight:600; color:var(--text-light); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.nav-tab.active { color:var(--blue-dark); border-bottom-color:var(--rose); }
+
+/* PAGES */
+.page { display:none; flex:1; }
+.page.active { display:flex; flex-direction:column; }
+
+/* SESSION PAGE */
+.session-page { max-width:480px; width:100%; margin:0 auto; padding:24px 20px 40px; display:flex; flex-direction:column; gap:16px; }
+.card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden; }
+.card-header { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.card-icon { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0; }
+.card-icon.blue { background:var(--blue-pale); }
+.card-icon.rose { background:var(--rose-light); }
+.card-icon.green { background:#e8faf2; }
+.card-title { font-size:0.9rem; font-weight:700; color:var(--text); }
+.card-sub { font-size:0.72rem; color:var(--text-light); margin-top:2px; }
+.card-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.field-label { font-size:0.72rem; font-weight:600; color:var(--text-mid); letter-spacing:0.03em; }
+.field-input { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; font-size:0.92rem; font-weight:500; outline:none; transition:border-color 0.15s,background 0.15s,box-shadow 0.15s; width:100%; }
+.field-input::placeholder { color:var(--text-light); font-weight:400; }
+.field-input:focus { border-color:var(--rose); background:white; box-shadow:0 0 0 3px var(--rose-light); }
+textarea.field-input { resize:none; height:80px; line-height:1.5; }
+.phone-row { display:flex; gap:8px; }
+.prefix-input { background:var(--surface2); border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:12px 10px; color:var(--text-mid); font-family:'DM Mono',monospace; font-size:0.88rem; width:66px; text-align:center; outline:none; }
+.prefix-input:focus { border-color:var(--rose); }
+.btn { border:none; border-radius:var(--radius-sm); padding:14px 20px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.18s; display:flex; align-items:center; justify-content:center; gap:8px; width:100%; }
+.btn-primary { background:var(--blue-dark); color:white; }
+.btn-primary:hover { background:#1c2f40; transform:translateY(-1px); box-shadow:var(--shadow); }
+.btn-ghost { background:var(--blue-pale); color:var(--blue-dark); border:1.5px solid var(--blue-mid); }
+.btn-ghost:hover { background:#dde9f8; transform:translateY(-1px); }
+.link-result { background:var(--blue-pale); border:1.5px solid var(--blue-mid); border-radius:var(--radius-sm); padding:12px 14px; display:flex; align-items:center; gap:10px; }
+.link-result-url { flex:1; font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--blue-dark); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; opacity:0.8; }
+.btn-copy-sm { background:var(--blue-dark); color:white; border:none; border-radius:7px; padding:6px 12px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.7rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.15s; flex-shrink:0; }
+.btn-copy-sm:hover { background:#1c2f40; }
+.btn-copy-sm.copied { background:#16a34a; }
+.send-row { display:flex; gap:8px; }
+.btn-send { flex:1; padding:12px 8px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:0.75rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; transition:all 0.15s; color:var(--text-mid); }
+.btn-send:hover { transform:translateY(-2px); box-shadow:var(--shadow); }
+.btn-send-icon { font-size:1.2rem; }
+.btn-send.wa:hover { background:#f0fdf4; border-color:#86efac; color:#16a34a; }
+.btn-send.sms:hover { background:var(--blue-pale); border-color:var(--blue-mid); color:var(--blue-dark); }
+.btn-send.mail:hover { background:var(--rose-light); border-color:var(--rose-mid); color:var(--rose); }
+.steps { display:flex; flex-direction:column; gap:0; }
+.step-item { display:flex; gap:14px; align-items:flex-start; padding:14px 0; border-bottom:1px solid var(--border); }
+.step-item:last-child { border-bottom:none; padding-bottom:0; }
+.step-item:first-child { padding-top:0; }
+.step-num { width:28px; height:28px; border-radius:50%; background:var(--blue-pale); color:var(--blue-dark); font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+.step-text { font-size:0.82rem; color:var(--text-mid); line-height:1.55; }
+.step-text strong { color:var(--text); font-weight:600; }
+
+/* ANNOTATION PAGE */
+.anno-page { flex:1; display:flex; flex-direction:column; background:#111b24; }
+.anno-bar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 16px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.bar-group { display:flex; align-items:center; gap:4px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:4px; }
+.bar-btn { width:34px; height:34px; border-radius:7px; border:none; background:transparent; color:var(--text-mid); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:700; transition:all 0.12s; font-family:'Plus Jakarta Sans',sans-serif; }
+.bar-btn:hover { background:var(--border); color:var(--text); }
+.bar-btn.active { background:var(--blue-dark); color:white; }
+.bar-sep { width:1px; height:20px; background:var(--border); margin:0 2px; }
+.colors-group { display:flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; }
+.cdot { width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:all 0.12s; flex-shrink:0; }
+.cdot.active { border-color:var(--text); transform:scale(1.15); }
+.size-group { display:flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 12px; }
+.size-label { font-size:0.65rem; font-weight:600; color:var(--text-light); text-transform:uppercase; letter-spacing:0.06em; }
+input[type=range].sz { -webkit-appearance:none; width:72px; height:3px; border-radius:2px; background:var(--border); outline:none; cursor:pointer; }
+input[type=range].sz::-webkit-slider-thumb { -webkit-appearance:none; width:13px; height:13px; border-radius:50%; background:var(--rose); cursor:pointer; }
+.bar-actions { margin-left:auto; display:flex; gap:6px; }
+.btn-sm { padding:7px 14px; border-radius:8px; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all 0.15s; border:1.5px solid var(--border); background:var(--surface); color:var(--text-mid); display:flex; align-items:center; gap:5px; }
+.btn-sm:hover { background:var(--surface2); color:var(--text); }
+.btn-sm.danger { color:var(--rose); border-color:var(--rose-mid); }
+.btn-sm.danger:hover { background:var(--rose-light); }
+
+/* Canvas zone */
+.canvas-zone { flex:1; display:flex; align-items:center; justify-content:center; padding:20px; }
+.canvas-wrap { position:relative; width:100%; max-width:900px; background:#0d1b28; border-radius:var(--radius); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+.video-container { width:100%; aspect-ratio:16/9; background:#0a1520; position:relative; overflow:hidden; }
+
+/* Daily iframe — derrière le canvas */
+#dailyContainer { position:absolute; inset:0; z-index:1; }
+
+/* Placeholder avant connexion */
+.video-placeholder { position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:#0a1520; transition:opacity 0.4s; }
+.video-placeholder.hidden { opacity:0; pointer-events:none; }
+.video-ph-icon { width:56px; height:56px; border-radius:50%; background:rgba(200,217,241,0.07); display:flex; align-items:center; justify-content:center; font-size:1.4rem; border:1px solid rgba(200,217,241,0.1); }
+.video-ph-text { font-size:0.72rem; color:rgba(200,217,241,0.25); letter-spacing:0.08em; text-transform:uppercase; }
+.video-ph-sub { font-size:0.6rem; color:rgba(200,217,241,0.13); }
+
+/* Canvas annotation — tout en haut */
+#annoCanvas { position:absolute; inset:0; width:100%; height:100%; cursor:crosshair; touch-action:none; z-index:3; }
+
+/* Cursor pill */
+.cursor-pill { position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:5px 10px 5px 7px; display:flex; align-items:center; gap:7px; font-size:0.62rem; color:rgba(255,255,255,0.35); pointer-events:none; backdrop-filter:blur(6px); z-index:10; }
+.cpill-dot { border-radius:50%; flex-shrink:0; transition:all 0.15s; }
+
+/* Video bottom bar */
+.video-bar { background:rgba(10,21,32,0.95); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(10px); }
+.vbar-left { display:flex; align-items:center; gap:10px; }
+.vbar-center { display:flex; gap:8px; }
+.vbar-right { display:flex; align-items:center; gap:8px; }
+.live-chip { display:flex; align-items:center; gap:5px; font-size:0.65rem; font-weight:700; color:#4ade80; letter-spacing:0.06em; text-transform:uppercase; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:#4ade80; animation:blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.vbar-client { font-size:0.68rem; color:rgba(200,217,241,0.3); font-family:'DM Mono',monospace; }
+.vbtn { width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.85rem; transition:all 0.15s; }
+.vbtn-ctrl { background:rgba(255,255,255,0.08); color:rgba(200,217,241,0.6); }
+.vbtn-ctrl:hover { background:rgba(255,255,255,0.14); }
+.vbtn-end { background:#ef4444; color:white; }
+.vbtn-end:hover { background:#dc2626; transform:scale(1.05); }
+.vbar-timer { font-size:0.68rem; color:rgba(200,217,241,0.3); font-family:'DM Mono',monospace; }
+
+/* Toast */
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:white; padding:11px 20px; border-radius:30px; font-size:0.8rem; font-weight:600; box-shadow:var(--shadow-lg); transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:999; white-space:nowrap; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+@keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.slide-up { animation:slideUp 0.35s ease forwards; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-name">Abriblue · Visio SAV</div>
+  <div class="header-badge">Technicien</div>
+</div>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="switchTab('session')"><span>📋</span> Nouvelle session</div>
+  <div class="nav-tab" onclick="switchTab('anno')"><span>✏️</span> Annotation</div>
+</div>
+
+<!-- PAGE SESSION -->
+<div class="page active" id="page-session">
+<div class="session-page">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">👤</div>
+      <div>
+        <div class="card-title">Informations client</div>
+        <div class="card-sub">Remplis les champs pour créer la session</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <div class="field-label">Nom complet</div>
+        <input class="field-input" type="text" id="clientName" placeholder="Jean Dupont" />
+      </div>
+      <div class="field">
+        <div class="field-label">Téléphone</div>
+        <div class="phone-row">
+          <input class="prefix-input field-input" type="text" id="prefix" value="+33" />
+          <input class="field-input" type="tel" id="clientPhone" placeholder="06 12 34 56 78" style="flex:1" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Email <span style="color:var(--text-light);font-weight:400">(optionnel)</span></div>
+        <input class="field-input" type="email" id="clientEmail" placeholder="client@exemple.fr" />
+      </div>
+      <div class="field">
+        <div class="field-label">Objet du dépannage</div>
+        <textarea class="field-input" id="clientNote" placeholder="Décris brièvement le problème..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="generateSession()">
+    <span>▶</span> Générer la session visio
+  </button>
+
+  <div id="sessionResult" style="display:none; flex-direction:column; gap:16px;">
+    <div class="card slide-up">
+      <div class="card-header">
+        <div class="card-icon green">🔗</div>
+        <div>
+          <div class="card-title">Lien de session</div>
+          <div class="card-sub">Valide 1 heure · 1 participant</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="link-result">
+          <div class="link-result-url" id="sessionLink">—</div>
+          <button class="btn-copy-sm" id="copyBtn" onclick="copyLink()">Copier</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card slide-up">
+      <div class="card-header">
+        <div class="card-icon rose">📤</div>
+        <div>
+          <div class="card-title">Envoyer au client</div>
+          <div class="card-sub">Choisir le canal d'envoi</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="send-row">
+          <button class="btn-send wa" onclick="sendWhatsApp()"><span class="btn-send-icon">💬</span>WhatsApp</button>
+          <button class="btn-send sms" onclick="sendSMS()"><span class="btn-send-icon">📱</span>SMS</button>
+          <button class="btn-send mail" onclick="sendEmail()"><span class="btn-send-icon">✉️</span>Email</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-ghost slide-up" onclick="switchTab('anno')">✏️ Ouvrir l'outil d'annotation</button>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">💡</div>
+      <div><div class="card-title">Comment ça marche</div></div>
+    </div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text">Génère un lien unique et envoie-le au client par <strong>WhatsApp, SMS ou email</strong></div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text">Le client clique — <strong>rien à installer</strong>, s'ouvre dans son navigateur mobile</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">Sa caméra démarre, tu vois ce qu'il filme et tu peux <strong>annoter en direct</strong> — il voit tes annotations</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- PAGE ANNOTATION -->
+<div class="page" id="page-anno">
+<div class="anno-page">
+
+  <div class="anno-bar">
+    <div class="bar-group">
+      <button class="bar-btn active" id="tool-pen" onclick="setTool('pen')" title="Crayon">✏</button>
+      <button class="bar-btn" id="tool-arrow" onclick="setTool('arrow')" title="Flèche">➤</button>
+      <button class="bar-btn" id="tool-circle" onclick="setTool('circle')" title="Cercle">○</button>
+      <button class="bar-btn" id="tool-rect" onclick="setTool('rect')" title="Rectangle">▭</button>
+      <button class="bar-btn" id="tool-text" onclick="setTool('text')" title="Texte">T</button>
+      <div class="bar-sep"></div>
+      <button class="bar-btn" id="tool-eraser" onclick="setTool('eraser')" title="Gomme">⬡</button>
+    </div>
+
+    <div class="colors-group">
+      <div class="cdot active" style="background:#ef7a91" data-color="#ef7a91" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#23394c" data-color="#23394c" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#FFD600" data-color="#FFD600" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#00C853" data-color="#00C853" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#2979FF" data-color="#2979FF" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#FF6D00" data-color="#FF6D00" onclick="setColor(this)"></div>
+      <div class="cdot" style="background:#ffffff;border:1.5px solid #ddd" data-color="#ffffff" onclick="setColor(this)"></div>
+    </div>
+
+    <div class="size-group">
+      <span class="size-label">Taille</span>
+      <input type="range" class="sz" id="sizeSlider" min="1" max="20" value="3" oninput="updateSize(this.value)" />
+    </div>
+
+    <div class="bar-actions">
+      <button class="btn-sm" onclick="undo()">↩ Annuler</button>
+      <button class="btn-sm danger" onclick="clearCanvas()">✕ Effacer</button>
+    </div>
+  </div>
+
+  <div class="canvas-zone">
+    <div class="canvas-wrap">
+      <div class="video-container" id="videoContainer">
+        <!-- Daily.js injecte la vidéo ici -->
+        <div id="dailyContainer"></div>
+
+        <!-- Placeholder avant que le client rejoigne -->
+        <div class="video-placeholder" id="videoPlaceholder">
+          <div class="video-ph-icon">📹</div>
+          <div class="video-ph-text">En attente du client</div>
+          <div class="video-ph-sub">Le client doit cliquer sur son lien</div>
+        </div>
+
+        <!-- Canvas d'annotation par-dessus tout -->
+        <canvas id="annoCanvas"></canvas>
+      </div>
+
+      <div class="cursor-pill">
+        <div class="cpill-dot" id="cpillDot" style="width:6px;height:6px;background:#ef7a91"></div>
+        <span id="cpillLabel">Crayon · 3px</span>
+      </div>
+
+      <div class="video-bar">
+        <div class="vbar-left">
+          <div class="live-chip"><div class="live-dot"></div> Live</div>
+          <div class="vbar-client" id="vcName">— En attente</div>
+        </div>
+        <div class="vbar-center">
+          <button class="vbtn vbtn-ctrl" id="muteBtn" onclick="toggleMute()" title="Micro">🎤</button>
+          <button class="vbtn vbtn-end" onclick="endCall()">📵</button>
+          <button class="vbtn vbtn-ctrl" id="camBtn" onclick="toggleCam()" title="Caméra">📷</button>
+        </div>
+        <div class="vbar-right">
+          <div class="vbar-timer" id="vcTimer">00:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/@daily-co/daily-js"></script>
+<script>
+// ─────────────────────────────────────────
+// CONFIG — remplace par ta vraie clé API
+// ─────────────────────────────────────────
+const DAILY_API_KEY = '44d97bb628cc1cf99c6c38df4458a9543b0dad62492985067c3f3adcfda5fcc0';
+
+// L'URL de base de ta page client sur GitHub Pages
+// Ex: 'https://ton-pseudo.github.io/abriblue-visio/client.html'
+const CLIENT_PAGE_BASE = 'https://CYRIL-Creator656.github.io/abriblue-visio/client.html';
+
+// ─────────────────────────────────────────
+
+let roomUrl = '', roomName = '', client = {};
+let callFrame = null;
+let muted = false, camOff = false;
+
+// TABS
+function switchTab(t) {
+  ['session','anno'].forEach((id, i) => {
+    document.getElementById(`page-${id}`).classList.toggle('active', id===t);
+    document.querySelectorAll('.nav-tab')[i].classList.toggle('active', id===t);
+  });
+  if (t==='anno') { setTimeout(initCanvas, 60); startTimer(); joinDaily(); }
+}
+
+// GÉNÉRER SESSION
+async function generateSession() {
+  const name = document.getElementById('clientName').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  if (!name || !phone) { showToast('⚠️ Nom et téléphone requis'); return; }
+  client = { name, phone, email: document.getElementById('clientEmail').value.trim(), note: document.getElementById('clientNote').value.trim() };
+  document.getElementById('vcName').textContent = name;
+
+  roomName = `abriblue-${Date.now().toString(36)}-${Math.random().toString(36).substring(2,6)}`;
+
+  if (DAILY_API_KEY !== 'VOTRE_CLE_API_DAILY') {
+    try {
+      const r = await fetch('https://api.daily.co/v1/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${DAILY_API_KEY}` },
+        body: JSON.stringify({ name: roomName, properties: { exp: Math.floor(Date.now()/1000)+3600, max_participants: 2 } })
+      });
+      const data = await r.json();
+      roomUrl = data.url;
+      roomName = data.name;
+    } catch(e) {
+      roomUrl = `https://abriblue.daily.co/${roomName}`;
+    }
+  } else {
+    roomUrl = `https://abriblue.daily.co/${roomName}`;
+  }
+
+  // Le lien client pointe vers client.html avec le nom de la salle en paramètre
+  const clientLink = `${CLIENT_PAGE_BASE}?room=${roomName}`;
+  document.getElementById('sessionLink').textContent = clientLink;
+
+  const el = document.getElementById('sessionResult');
+  el.style.display = 'flex'; el.style.flexDirection = 'column'; el.style.gap = '16px';
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function clientLink() {
+  return document.getElementById('sessionLink').textContent;
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(clientLink()).then(() => {
+    const b = document.getElementById('copyBtn');
+    b.textContent = '✓ Copié'; b.classList.add('copied');
+    showToast('✅ Lien copié !');
+    setTimeout(() => { b.textContent = 'Copier'; b.classList.remove('copied'); }, 2000);
+  });
+}
+
+function msg() {
+  const note = client.note ? `\nObjet : ${client.note}` : '';
+  return `Bonjour ${client.name}, voici votre lien de visio-assistance Abriblue :\n${clientLink()}${note}\n\nCliquez simplement sur le lien — aucune installation nécessaire.`;
+}
+function sendWhatsApp() {
+  const p = document.getElementById('prefix').value.replace('+','').replace(/\s/g,'');
+  const n = client.phone.replace(/\s/g,'').replace(/^0/,'');
+  window.open(`https://wa.me/${p}${n}?text=${encodeURIComponent(msg())}`, '_blank');
+  showToast('💬 Ouverture WhatsApp...');
+}
+function sendSMS() {
+  window.open(`sms:${document.getElementById('prefix').value}${client.phone.replace(/\s/g,'')}?body=${encodeURIComponent(msg())}`, '_blank');
+  showToast('📱 Ouverture SMS...');
+}
+function sendEmail() {
+  if (!client.email) { showToast('⚠️ Aucun email renseigné'); return; }
+  window.open(`mailto:${client.email}?subject=${encodeURIComponent('Votre session visio-assistance Abriblue')}&body=${encodeURIComponent(msg())}`, '_blank');
+  showToast('✉️ Ouverture messagerie...');
+}
+
+// DAILY — rejoindre la salle
+async function joinDaily() {
+  if (!roomUrl || callFrame) return;
+
+  callFrame = window.DailyIframe.createFrame(
+    document.getElementById('dailyContainer'),
+    {
+      iframeStyle: { position:'absolute', inset:'0', width:'100%', height:'100%', border:'none' },
+      showLeaveButton: false,
+      showFullscreenButton: false,
+    }
+  );
+
+  callFrame.on('joined-meeting', () => {
+    document.getElementById('videoPlaceholder').classList.add('hidden');
+    showToast('✅ Salle rejointe — en attente du client');
+  });
+
+  callFrame.on('participant-joined', (e) => {
+    if (!e.participant.local) {
+      showToast(`📹 ${e.participant.user_name || 'Client'} a rejoint la session`);
+    }
+  });
+
+  callFrame.on('participant-left', (e) => {
+    if (!e.participant.local) showToast('Client déconnecté');
+  });
+
+  // Reçoit les annotations envoyées par le client (si le client dessine)
+  callFrame.on('app-message', (e) => {
+    if (e.data && e.data.type === 'anno') applyRemoteStroke(e.data);
+  });
+
+  try {
+    await callFrame.join({ url: roomUrl, userName: 'Technicien Abriblue' });
+  } catch(err) {
+    showToast('⚠️ Erreur de connexion à la salle');
+    console.error(err);
+  }
+}
+
+function toggleMute() {
+  if (!callFrame) return;
+  muted = !muted;
+  callFrame.setLocalAudio(!muted);
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🎤';
+}
+function toggleCam() {
+  if (!callFrame) return;
+  camOff = !camOff;
+  callFrame.setLocalVideo(!camOff);
+  document.getElementById('camBtn').textContent = camOff ? '📵' : '📷';
+}
+function endCall() {
+  if (callFrame) { callFrame.leave(); callFrame.destroy(); callFrame = null; }
+  document.getElementById('videoPlaceholder').classList.remove('hidden');
+  showToast('📵 Session terminée');
+}
+
+// ANNOTATION
+let canvas, ctx, drawing=false, x0=0, y0=0;
+let tool='pen', color='#ef7a91', size=3;
+let history=[], snap=null, ready=false;
+
+function initCanvas() {
+  if (ready) return;
+  canvas = document.getElementById('annoCanvas');
+  const parent = canvas.parentElement;
+  canvas.width = parent.offsetWidth;
+  canvas.height = parent.offsetHeight;
+  ctx = canvas.getContext('2d');
+  ctx.lineCap='round'; ctx.lineJoin='round';
+
+  const on = (ev, fn) => canvas.addEventListener(ev, fn, { passive:false });
+  on('mousedown', e => start(norm(e)));
+  on('mousemove', e => move(norm(e)));
+  on('mouseup', end); on('mouseleave', end);
+  on('touchstart', e => { e.preventDefault(); start(norm(e.touches[0])); });
+  on('touchmove', e => { e.preventDefault(); move(norm(e.touches[0])); });
+  on('touchend', end);
+
+  window.addEventListener('resize', () => {
+    const img = ctx.getImageData(0,0,canvas.width,canvas.height);
+    canvas.width = parent.offsetWidth;
+    canvas.height = parent.offsetHeight;
+    ctx.putImageData(img,0,0);
+  });
+  document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey)&&e.key==='z') undo(); });
+  ready = true;
+}
+
+// Coordonnées normalisées 0→1 pour être indépendantes de la résolution
+function norm(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height };
+}
+function px(n) { return { x: n.x*canvas.width, y: n.y*canvas.height }; }
+
+function broadcast(data) {
+  if (callFrame) callFrame.sendAppMessage({ type:'anno', ...data }, '*');
+}
+
+function start(p) {
+  drawing=true; x0=p.x; y0=p.y;
+  snap = ctx.getImageData(0,0,canvas.width,canvas.height);
+  if (tool==='text') {
+    const t = prompt('Texte à écrire :');
+    if (t) { save(); drawText(p,t,color,size); broadcast({action:'text',x:p.x,y:p.y,text:t,color,size}); }
+    drawing=false; return;
+  }
+  if (tool==='pen'||tool==='eraser') {
+    save();
+    const {x,y} = px(p);
+    ctx.beginPath(); ctx.moveTo(x,y);
+    broadcast({action:'start',tool,x:p.x,y:p.y,color,size});
+  }
+}
+
+function move(p) {
+  if (!drawing) return;
+  const {x,y} = px(p);
+  if (tool==='pen') {
+    ctx.lineWidth=size; ctx.strokeStyle=color;
+    ctx.lineTo(x,y); ctx.stroke();
+    broadcast({action:'move',tool:'pen',x:p.x,y:p.y,color,size});
+  } else if (tool==='eraser') {
+    ctx.globalCompositeOperation='destination-out';
+    ctx.lineWidth=size*5; ctx.lineTo(x,y); ctx.stroke();
+    ctx.globalCompositeOperation='source-over';
+    broadcast({action:'move',tool:'eraser',x:p.x,y:p.y,size});
+  } else {
+    ctx.putImageData(snap,0,0);
+    ctx.strokeStyle=color; ctx.lineWidth=size; ctx.beginPath();
+    const s=px({x:x0,y:y0});
+    if (tool==='arrow') drawArrow(s.x,s.y,x,y);
+    else if (tool==='circle') { const cx=(s.x+x)/2,cy=(s.y+y)/2; ctx.ellipse(cx,cy,Math.abs(x-s.x)/2,Math.abs(y-s.y)/2,0,0,2*Math.PI); ctx.stroke(); }
+    else if (tool==='rect') ctx.strokeRect(s.x,s.y,x-s.x,y-s.y);
+    broadcast({action:'shape',tool,x0:x0,y0:y0,x:p.x,y:p.y,color,size});
+  }
+}
+
+function end() {
+  if (!drawing) return;
+  if (!['pen','eraser','text'].includes(tool)) save();
+  drawing=false; ctx.beginPath();
+  broadcast({action:'end'});
+}
+
+// Applique un trait reçu d'un autre participant
+function applyRemoteStroke(d) {
+  if (!ctx) return;
+  const W=canvas.width, H=canvas.height;
+  ctx.lineCap='round'; ctx.lineJoin='round';
+  if (d.action==='start') {
+    ctx.beginPath(); ctx.moveTo(d.x*W, d.y*H);
+  } else if (d.action==='move') {
+    if (d.tool==='pen') {
+      ctx.lineWidth=d.size; ctx.strokeStyle=d.color;
+      ctx.lineTo(d.x*W,d.y*H); ctx.stroke();
+    } else if (d.tool==='eraser') {
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=d.size*5; ctx.lineTo(d.x*W,d.y*H); ctx.stroke();
+      ctx.globalCompositeOperation='source-over';
+    }
+  } else if (d.action==='shape') {
+    ctx.strokeStyle=d.color; ctx.lineWidth=d.size; ctx.beginPath();
+    const x1=d.x0*W,y1=d.y0*H,x2=d.x*W,y2=d.y*H;
+    if (d.tool==='arrow') drawArrow(x1,y1,x2,y2);
+    else if (d.tool==='circle') { const cx=(x1+x2)/2,cy=(y1+y2)/2; ctx.ellipse(cx,cy,Math.abs(x2-x1)/2,Math.abs(y2-y1)/2,0,0,2*Math.PI); ctx.stroke(); }
+    else if (d.tool==='rect') ctx.strokeRect(x1,y1,x2-x1,y2-y1);
+  } else if (d.action==='text') {
+    drawText({x:d.x,y:d.y},d.text,d.color,d.size);
+  } else if (d.action==='clear') {
+    ctx.clearRect(0,0,W,H);
+  }
+}
+
+function drawText(p,t,c,s) {
+  ctx.font=`bold ${Math.max(14,s*5)}px Plus Jakarta Sans,sans-serif`;
+  ctx.fillStyle=c;
+  ctx.fillText(t, p.x*canvas.width, p.y*canvas.height);
+}
+
+function drawArrow(x1,y1,x2,y2) {
+  const h=Math.max(14,size*4), a=Math.atan2(y2-y1,x2-x1);
+  ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a-Math.PI/6),y2-h*Math.sin(a-Math.PI/6));
+  ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a+Math.PI/6),y2-h*Math.sin(a+Math.PI/6));
+  ctx.stroke();
+}
+
+function save() { if(!ctx) return; history.push(ctx.getImageData(0,0,canvas.width,canvas.height)); if(history.length>40) history.shift(); }
+function undo() { if(!ctx||!history.length) return; ctx.putImageData(history.pop(),0,0); }
+function clearCanvas() {
+  if(!ctx) return; save();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  broadcast({action:'clear'});
+}
+
+function setTool(t) {
+  tool=t;
+  document.querySelectorAll('.bar-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`tool-${t}`).classList.add('active');
+  if(canvas) canvas.style.cursor = t==='eraser'?'cell':'crosshair';
+  updatePill();
+}
+function setColor(el) {
+  color=el.dataset.color;
+  document.querySelectorAll('.cdot').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active'); updatePill();
+}
+function updateSize(v) { size=parseInt(v); updatePill(); }
+function updatePill() {
+  const dot=document.getElementById('cpillDot'), lbl=document.getElementById('cpillLabel');
+  if(!dot||!lbl) return;
+  const s=Math.max(5,Math.min(size*3,28));
+  dot.style.width=s+'px'; dot.style.height=s+'px';
+  dot.style.background = tool==='eraser'?'rgba(200,217,241,0.4)':color;
+  const n={pen:'Crayon',arrow:'Flèche',circle:'Cercle',rect:'Rectangle',text:'Texte',eraser:'Gomme'};
+  lbl.textContent=`${n[tool]} · ${size}px`;
+}
+
+function showToast(t) {
+  const el=document.getElementById('toast');
+  el.textContent=t; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+let secs=0, started=false;
+function startTimer() {
+  if(started) return; started=true;
+  setInterval(()=>{ secs++; const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0'); document.getElementById('vcTimer').textContent=`${m}:${s}`; },1000);
+}
+</script>
+</body>
+</html>
