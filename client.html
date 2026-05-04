@@ -48,12 +48,15 @@ body {
   background: #060e17;
 }
 
-/* Daily iframe plein écran */
-#dailyContainer {
+/* Vidéo locale (caméra du client) */
+#localVideo {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  background: #060e17;
 }
 
 /* Canvas annotation par-dessus — pointer-events:none car le client ne dessine pas */
@@ -167,8 +170,10 @@ body {
 </div>
 
 <div class="video-wrap">
-  <!-- Daily.js injecte la vidéo ici -->
-  <div id="dailyContainer"></div>
+  <!-- Vidéo locale du client (mode callObject, pas d'iframe) -->
+  <video id="localVideo" autoplay playsinline muted></video>
+  <!-- Audio du technicien -->
+  <audio id="remoteAudio" autoplay></audio>
 
   <!-- Canvas pour recevoir et afficher les annotations du technicien -->
   <canvas id="annoCanvas"></canvas>
@@ -226,20 +231,33 @@ async function initClient(roomUrl) {
   ctx = canvas.getContext('2d');
   ctx.lineCap='round'; ctx.lineJoin='round';
 
-  // Init Daily
-  callFrame = window.DailyIframe.createFrame(
-    document.getElementById('dailyContainer'),
-    {
-      iframeStyle: { position:'absolute', inset:'0', width:'100%', height:'100%', border:'none' },
-      showLeaveButton: false,
-      showFullscreenButton: false,
-    }
-  );
+  // Init Daily — callObject (sans iframe, compatible Safari iOS)
+  callFrame = window.DailyIframe.createCallObject();
 
   callFrame.on('joined-meeting', () => {
+    // Affiche la caméra locale
+    const tracks = callFrame.participants().local.tracks;
+    if (tracks.video && tracks.video.track) {
+      const v = document.getElementById('localVideo');
+      v.srcObject = new MediaStream([tracks.video.track]);
+    }
     document.getElementById('waitingScreen').classList.add('hidden');
     document.getElementById('statusDot').classList.remove('waiting');
     document.getElementById('statusLabel').textContent = 'En direct';
+  });
+
+  callFrame.on('track-started', (e) => {
+    if (e.participant.local && e.track.kind === 'video') {
+      const v = document.getElementById('localVideo');
+      const ms = v.srcObject || new MediaStream();
+      ms.addTrack(e.track);
+      v.srcObject = ms;
+    } else if (!e.participant.local && e.track.kind === 'audio') {
+      const a = document.getElementById('remoteAudio');
+      const ms = a.srcObject || new MediaStream();
+      ms.addTrack(e.track);
+      a.srcObject = ms;
+    }
   });
 
   callFrame.on('error', () => {
