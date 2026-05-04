@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: #0a1520;
@@ -18,7 +17,6 @@ body {
   overflow: hidden;
 }
 
-/* HEADER */
 .header {
   padding: 14px 16px 10px;
   display: flex;
@@ -40,7 +38,6 @@ body {
 .status-dot.waiting { background: #ef7a91; animation: none; opacity: 0.7; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-/* ZONE VIDÉO + CANVAS */
 .video-wrap {
   flex: 1;
   position: relative;
@@ -48,7 +45,6 @@ body {
   background: #060e17;
 }
 
-/* Vidéo locale (caméra du client) */
 #localVideo {
   position: absolute;
   inset: 0;
@@ -59,7 +55,6 @@ body {
   background: #060e17;
 }
 
-/* Canvas annotation par-dessus — pointer-events:none car le client ne dessine pas */
 #annoCanvas {
   position: absolute;
   inset: 0;
@@ -69,8 +64,8 @@ body {
   z-index: 5;
 }
 
-/* Écran d'attente */
-.waiting-screen {
+/* Écrans superposés */
+.overlay-screen {
   position: absolute;
   inset: 0;
   z-index: 10;
@@ -78,15 +73,16 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 18px;
   background: #0a1520;
   text-align: center;
   padding: 32px;
-  transition: opacity 0.4s;
+  transition: opacity 0.35s;
 }
-.waiting-screen.hidden { opacity: 0; pointer-events: none; }
+.overlay-screen.hidden { opacity: 0; pointer-events: none; }
+.overlay-screen.gone { display: none; }
 
-.waiting-icon {
+.screen-icon {
   width: 72px; height: 72px;
   border-radius: 50%;
   background: rgba(239,122,145,0.1);
@@ -94,8 +90,8 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 2rem;
 }
-.waiting-title { font-size: 1.1rem; font-weight: 700; color: white; }
-.waiting-sub { font-size: 0.8rem; color: rgba(200,217,241,0.4); line-height: 1.6; max-width: 280px; }
+.screen-title { font-size: 1.1rem; font-weight: 700; color: white; }
+.screen-sub { font-size: 0.8rem; color: rgba(200,217,241,0.4); line-height: 1.6; max-width: 280px; }
 
 .spinner {
   width: 32px; height: 32px;
@@ -106,25 +102,38 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Message d'erreur */
-.error-screen {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: #0a1520;
-  text-align: center;
-  padding: 32px;
+.join-btn {
+  background: #ef7a91;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 36px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
 }
-.error-screen.show { display: flex; }
-.error-title { font-size: 1rem; font-weight: 700; color: #ef7a91; }
-.error-sub { font-size: 0.8rem; color: rgba(200,217,241,0.4); line-height: 1.6; max-width: 280px; }
+.join-btn:active { transform: scale(0.96); background: #e06070; }
 
-/* Barre bas */
+.retry-btn {
+  background: transparent;
+  color: rgba(200,217,241,0.5);
+  border: 1px solid rgba(200,217,241,0.15);
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.retry-btn:active { background: rgba(200,217,241,0.05); }
+
+.error-title { font-size: 1rem; font-weight: 700; color: #ef7a91; }
+.error-sub { font-size: 0.8rem; color: rgba(200,217,241,0.35); line-height: 1.6; max-width: 280px; }
+
 .bottom-bar {
   padding: 12px 20px 20px;
   display: flex;
@@ -135,7 +144,6 @@ body {
   backdrop-filter: blur(10px);
   flex-shrink: 0;
 }
-
 .ctrl-btn {
   width: 48px; height: 48px;
   border-radius: 50%;
@@ -147,7 +155,6 @@ body {
   background: rgba(255,255,255,0.08);
   color: rgba(200,217,241,0.7);
 }
-.ctrl-btn:hover { background: rgba(255,255,255,0.14); }
 .ctrl-btn.active { background: rgba(239,122,145,0.2); color: #ef7a91; }
 
 .hint {
@@ -163,34 +170,39 @@ body {
 
 <div class="header">
   <div class="logo">Abri<span>blue</span> · Visio SAV</div>
-  <div class="status-chip" id="statusChip">
+  <div class="status-chip">
     <div class="status-dot waiting" id="statusDot"></div>
-    <span id="statusLabel">Connexion…</span>
+    <span id="statusLabel">En attente</span>
   </div>
 </div>
 
 <div class="video-wrap">
-  <!-- Vidéo locale du client (mode callObject, pas d'iframe) -->
   <video id="localVideo" autoplay playsinline muted></video>
-  <!-- Audio du technicien -->
   <audio id="remoteAudio" autoplay></audio>
-
-  <!-- Canvas pour recevoir et afficher les annotations du technicien -->
   <canvas id="annoCanvas"></canvas>
 
-  <!-- Écran d'attente -->
-  <div class="waiting-screen" id="waitingScreen">
-    <div class="waiting-icon">📹</div>
-    <div class="waiting-title">Connexion en cours…</div>
-    <div class="waiting-sub">Autorise l'accès à ta caméra quand ton navigateur te le demande</div>
+  <!-- Écran 1 : invitation à rejoindre (tap requis par Safari) -->
+  <div class="overlay-screen" id="screenJoin">
+    <div class="screen-icon">📹</div>
+    <div class="screen-title">Session Abriblue</div>
+    <div class="screen-sub">Ton technicien t'attend. Appuie sur le bouton pour démarrer la visio.</div>
+    <button class="join-btn" id="joinBtn">Rejoindre la session</button>
+  </div>
+
+  <!-- Écran 2 : connexion en cours -->
+  <div class="overlay-screen hidden gone" id="screenConnect">
+    <div class="screen-icon">📹</div>
+    <div class="screen-title">Connexion en cours…</div>
+    <div class="screen-sub">Autorise l'accès à ta caméra et ton micro quand le navigateur te le demande.</div>
     <div class="spinner"></div>
   </div>
 
-  <!-- Écran d'erreur -->
-  <div class="error-screen" id="errorScreen">
+  <!-- Écran 3 : erreur -->
+  <div class="overlay-screen hidden gone" id="screenError">
     <div style="font-size:2rem">⚠️</div>
-    <div class="error-title">Lien invalide ou expiré</div>
-    <div class="error-sub">Ce lien n'est plus valide. Contacte ton technicien Abriblue pour obtenir un nouveau lien.</div>
+    <div class="error-title">Connexion impossible</div>
+    <div class="error-sub" id="errorMsg">Vérifie ta connexion internet et réessaie, ou contacte ton technicien.</div>
+    <button class="retry-btn" id="retryBtn">Réessayer</button>
   </div>
 </div>
 
@@ -206,126 +218,149 @@ body {
 let callFrame = null;
 let muted = false, camOff = false;
 let canvas, ctx;
+let roomUrl = '';
 
 const params = new URLSearchParams(window.location.search);
 const roomParam = params.get('room');
 
 if (!roomParam) {
-  document.getElementById('errorScreen').classList.add('show');
-  document.getElementById('waitingScreen').classList.remove('show');
+  showError('Lien invalide ou expiré. Contacte ton technicien Abriblue.');
 } else {
-  initClient(decodeURIComponent(roomParam));
+  roomUrl = decodeURIComponent(roomParam);
+  document.getElementById('joinBtn').addEventListener('click', startSession);
+  document.getElementById('retryBtn').addEventListener('click', startSession);
 }
 
-async function initClient(roomUrl) {
-  // Init canvas
-  canvas = document.getElementById('annoCanvas');
-  const wrap = canvas.parentElement;
-  function resizeCanvas() {
-    canvas.width = wrap.offsetWidth;
-    canvas.height = wrap.offsetHeight;
-    if(ctx) { ctx.lineCap='round'; ctx.lineJoin='round'; }
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-  ctx = canvas.getContext('2d');
-  ctx.lineCap='round'; ctx.lineJoin='round';
-
-  // Init Daily — callObject (sans iframe, compatible Safari iOS)
-  callFrame = window.DailyIframe.createCallObject();
-
-  callFrame.on('joined-meeting', () => {
-    // Affiche la caméra locale
-    const tracks = callFrame.participants().local.tracks;
-    if (tracks.video && tracks.video.track) {
-      const v = document.getElementById('localVideo');
-      v.srcObject = new MediaStream([tracks.video.track]);
-    }
-    document.getElementById('waitingScreen').classList.add('hidden');
-    document.getElementById('statusDot').classList.remove('waiting');
-    document.getElementById('statusLabel').textContent = 'En direct';
-  });
-
-  callFrame.on('track-started', (e) => {
-    if (e.participant.local && e.track.kind === 'video') {
-      const v = document.getElementById('localVideo');
-      const ms = v.srcObject || new MediaStream();
-      ms.addTrack(e.track);
-      v.srcObject = ms;
-    } else if (!e.participant.local && e.track.kind === 'audio') {
-      const a = document.getElementById('remoteAudio');
-      const ms = a.srcObject || new MediaStream();
-      ms.addTrack(e.track);
-      a.srcObject = ms;
+// --- Gestion des écrans ---
+function showScreen(id) {
+  ['screenJoin','screenConnect','screenError'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (sid === id) {
+      el.classList.remove('gone');
+      requestAnimationFrame(() => el.classList.remove('hidden'));
+    } else {
+      el.classList.add('hidden');
+      el.addEventListener('transitionend', () => el.classList.add('gone'), { once: true });
     }
   });
+}
+function showError(msg) {
+  if (msg) document.getElementById('errorMsg').textContent = msg;
+  showScreen('screenError');
+}
 
-  callFrame.on('error', () => {
-    document.getElementById('waitingScreen').classList.add('hidden');
-    document.getElementById('errorScreen').classList.add('show');
-  });
-
-  // Reçoit les annotations du technicien et les dessine sur le canvas
-  callFrame.on('app-message', (e) => {
-    if (e.data && e.data.type === 'anno') applyStroke(e.data);
-  });
+// --- Démarrage (déclenché par tap — obligatoire pour Safari) ---
+async function startSession() {
+  if (callFrame) { try { callFrame.destroy(); } catch(e){} callFrame = null; }
+  showScreen('screenConnect');
+  initCanvas();
 
   try {
+    callFrame = window.DailyIframe.createCallObject();
+
+    callFrame.on('joined-meeting', () => {
+      // Récupère la piste vidéo locale
+      const tracks = callFrame.participants().local.tracks;
+      if (tracks.video && tracks.video.persistentTrack) {
+        attachLocalVideo(tracks.video.persistentTrack);
+      }
+      showScreen(null); // Cache tous les écrans → affiche la vidéo
+      document.getElementById('statusDot').classList.remove('waiting');
+      document.getElementById('statusLabel').textContent = 'En direct';
+    });
+
+    callFrame.on('track-started', (e) => {
+      if (e.participant.local && e.track.kind === 'video') {
+        attachLocalVideo(e.track);
+      } else if (!e.participant.local && e.track.kind === 'audio') {
+        const a = document.getElementById('remoteAudio');
+        const ms = (a.srcObject instanceof MediaStream) ? a.srcObject : new MediaStream();
+        ms.addTrack(e.track);
+        a.srcObject = ms;
+      }
+    });
+
+    callFrame.on('error', (e) => {
+      console.error('Daily error', e);
+      showError('Erreur de connexion. Vérifie ta connexion et réessaie.');
+    });
+
+    callFrame.on('app-message', (e) => {
+      if (e.data && e.data.type === 'anno') applyStroke(e.data);
+    });
+
     await callFrame.join({ url: roomUrl, userName: 'Client' });
+
   } catch(err) {
-    document.getElementById('waitingScreen').classList.add('hidden');
-    document.getElementById('errorScreen').classList.add('show');
-    console.error(err);
+    console.error('Join failed', err);
+    const msg = err && err.message && err.message.includes('Permission')
+      ? 'Accès caméra refusé. Autorise la caméra dans les réglages de ton navigateur.'
+      : 'Impossible de rejoindre la session. Vérifie ta connexion.';
+    showError(msg);
   }
 }
 
-// Dessine les annotations reçues du technicien
+function attachLocalVideo(track) {
+  const v = document.getElementById('localVideo');
+  if (v.srcObject instanceof MediaStream) {
+    if (!v.srcObject.getVideoTracks().length) v.srcObject.addTrack(track);
+  } else {
+    v.srcObject = new MediaStream([track]);
+  }
+}
+
+// --- Canvas annotations ---
+function initCanvas() {
+  canvas = document.getElementById('annoCanvas');
+  const wrap = canvas.parentElement;
+  function resize() {
+    canvas.width = wrap.offsetWidth;
+    canvas.height = wrap.offsetHeight;
+    if (ctx) { ctx.lineCap='round'; ctx.lineJoin='round'; }
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  ctx = canvas.getContext('2d');
+  ctx.lineCap='round'; ctx.lineJoin='round';
+}
+
 function applyStroke(d) {
   if (!ctx) return;
   const W = canvas.width, H = canvas.height;
   ctx.lineCap='round'; ctx.lineJoin='round';
-
   if (d.action === 'start') {
-    ctx.beginPath();
-    ctx.moveTo(d.x*W, d.y*H);
+    ctx.beginPath(); ctx.moveTo(d.x*W, d.y*H);
   } else if (d.action === 'move') {
     if (d.tool === 'pen') {
-      ctx.lineWidth = d.size;
-      ctx.strokeStyle = d.color;
-      ctx.lineTo(d.x*W, d.y*H);
-      ctx.stroke();
+      ctx.lineWidth=d.size; ctx.strokeStyle=d.color;
+      ctx.lineTo(d.x*W, d.y*H); ctx.stroke();
     } else if (d.tool === 'eraser') {
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = d.size * 5;
-      ctx.lineTo(d.x*W, d.y*H);
-      ctx.stroke();
-      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalCompositeOperation='destination-out';
+      ctx.lineWidth=d.size*5; ctx.lineTo(d.x*W, d.y*H); ctx.stroke();
+      ctx.globalCompositeOperation='source-over';
     }
   } else if (d.action === 'shape') {
-    ctx.strokeStyle = d.color;
-    ctx.lineWidth = d.size;
-    ctx.beginPath();
+    ctx.strokeStyle=d.color; ctx.lineWidth=d.size; ctx.beginPath();
     const x1=d.x0*W, y1=d.y0*H, x2=d.x*W, y2=d.y*H;
     if (d.tool === 'arrow') {
-      const h = Math.max(14, d.size*4), a = Math.atan2(y2-y1, x2-x1);
+      const h=Math.max(14,d.size*4), a=Math.atan2(y2-y1,x2-x1);
       ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a-Math.PI/6), y2-h*Math.sin(a-Math.PI/6));
-      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a+Math.PI/6), y2-h*Math.sin(a+Math.PI/6));
+      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a-Math.PI/6),y2-h*Math.sin(a-Math.PI/6));
+      ctx.moveTo(x2,y2); ctx.lineTo(x2-h*Math.cos(a+Math.PI/6),y2-h*Math.sin(a+Math.PI/6));
       ctx.stroke();
     } else if (d.tool === 'circle') {
       const cx=(x1+x2)/2, cy=(y1+y2)/2;
-      ctx.ellipse(cx,cy,Math.abs(x2-x1)/2,Math.abs(y2-y1)/2,0,0,2*Math.PI);
-      ctx.stroke();
+      ctx.ellipse(cx,cy,Math.abs(x2-x1)/2,Math.abs(y2-y1)/2,0,0,2*Math.PI); ctx.stroke();
     } else if (d.tool === 'rect') {
       ctx.strokeRect(x1,y1,x2-x1,y2-y1);
     }
   } else if (d.action === 'text') {
-    ctx.font = `bold ${Math.max(14,d.size*5)}px Plus Jakarta Sans,sans-serif`;
-    ctx.fillStyle = d.color;
+    ctx.font=`bold ${Math.max(14,d.size*5)}px Plus Jakarta Sans,sans-serif`;
+    ctx.fillStyle=d.color;
     ctx.fillText(d.text, d.x*W, d.y*H);
   } else if (d.action === 'clear') {
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0,0,W,H);
   }
 }
 
@@ -344,6 +379,20 @@ function toggleCam() {
   const btn = document.getElementById('camBtn');
   btn.textContent = camOff ? '📵' : '📷';
   btn.classList.toggle('active', camOff);
+}
+
+// Cache tous les écrans (affiche la vidéo brute)
+function showScreen(id) {
+  ['screenJoin','screenConnect','screenError'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (sid === id) {
+      el.classList.remove('gone');
+      requestAnimationFrame(() => el.classList.remove('hidden'));
+    } else {
+      el.classList.add('hidden');
+      el.addEventListener('transitionend', () => el.classList.add('gone'), { once: true });
+    }
+  });
 }
 </script>
 </body>
