@@ -207,7 +207,6 @@ body {
 </div>
 
 <div class="bottom-bar">
-  <button class="ctrl-btn" id="flipBtn" onclick="flipCamera()" title="Retourner caméra">🔄</button>
   <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Micro">🎤</button>
   <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Caméra">📷</button>
 </div>
@@ -379,33 +378,12 @@ function toggleCam() {
   btn.classList.toggle('active', camOff);
 }
 
-let camDevices = [], camIndex = 0;
-
 async function autoSwitchToRearCamera() {
   try {
     const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     const rearId = s.getVideoTracks()[0].getSettings().deviceId;
     s.getTracks().forEach(t => t.stop());
-    if (!camDevices.length) {
-      const all = await navigator.mediaDevices.enumerateDevices();
-      camDevices = all.filter(d => d.kind === 'videoinput');
-    }
-    const idx = camDevices.findIndex(d => d.deviceId === rearId);
-    if (idx >= 0) camIndex = idx;
     await callFrame.setInputDevicesAsync({ videoDeviceId: rearId });
-  } catch(e) {}
-}
-
-async function flipCamera() {
-  if (!callFrame) return;
-  try {
-    if (!camDevices.length) {
-      const all = await navigator.mediaDevices.enumerateDevices();
-      camDevices = all.filter(d => d.kind === 'videoinput');
-    }
-    if (camDevices.length < 2) return;
-    camIndex = (camIndex + 1) % camDevices.length;
-    await callFrame.setInputDevicesAsync({ videoDeviceId: camDevices[camIndex].deviceId });
   } catch(e) {}
 }
 
