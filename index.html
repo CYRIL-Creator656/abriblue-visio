@@ -448,18 +448,29 @@ function sendEmail() {
 async function joinDaily() {
   if (!roomUrl || callFrame) return;
 
-  callFrame = window.DailyIframe.createFrame(
-    document.getElementById('dailyContainer'),
-    {
-      iframeStyle: { position:'absolute', inset:'0', width:'100%', height:'100%', border:'none' },
-      showLeaveButton: false,
-      showFullscreenButton: false,
-    }
-  );
+  // Élément vidéo pour afficher la caméra du client
+  let videoEl = document.getElementById('clientVideo');
+  if (!videoEl) {
+    videoEl = document.createElement('video');
+    videoEl.id = 'clientVideo';
+    videoEl.autoplay = true;
+    videoEl.playsInline = true;
+    videoEl.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;';
+    document.getElementById('dailyContainer').appendChild(videoEl);
+  }
+
+  callFrame = window.DailyIframe.createCallObject();
 
   callFrame.on('joined-meeting', () => {
-    document.getElementById('videoPlaceholder').classList.add('hidden');
     showToast('✅ Salle rejointe — en attente du client');
+  });
+
+  callFrame.on('track-started', (e) => {
+    if (!e.participant.local && e.track.kind === 'video') {
+      const v = document.getElementById('clientVideo');
+      v.srcObject = new MediaStream([e.track]);
+      document.getElementById('videoPlaceholder').classList.add('hidden');
+    }
   });
 
   callFrame.on('participant-joined', (e) => {
@@ -469,10 +480,14 @@ async function joinDaily() {
   });
 
   callFrame.on('participant-left', (e) => {
-    if (!e.participant.local) showToast('Client déconnecté');
+    if (!e.participant.local) {
+      showToast('Client déconnecté');
+      const v = document.getElementById('clientVideo');
+      if (v) v.srcObject = null;
+      document.getElementById('videoPlaceholder').classList.remove('hidden');
+    }
   });
 
-  // Reçoit les annotations envoyées par le client (si le client dessine)
   callFrame.on('app-message', (e) => {
     if (e.data && e.data.type === 'anno') applyRemoteStroke(e.data);
   });
@@ -499,6 +514,8 @@ function toggleCam() {
 }
 function endCall() {
   if (callFrame) { callFrame.leave(); callFrame.destroy(); callFrame = null; }
+  const v = document.getElementById('clientVideo');
+  if (v) v.srcObject = null;
   document.getElementById('videoPlaceholder').classList.remove('hidden');
   showToast('📵 Session terminée');
 }

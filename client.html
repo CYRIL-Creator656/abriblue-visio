@@ -207,6 +207,7 @@ body {
 </div>
 
 <div class="bottom-bar">
+  <button class="ctrl-btn" id="flipBtn" onclick="flipCamera()" title="Retourner caméra">🔄</button>
   <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Micro">🎤</button>
   <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Caméra">📷</button>
 </div>
@@ -256,7 +257,9 @@ async function startSession() {
   initCanvas();
 
   try {
-    callFrame = window.DailyIframe.createCallObject();
+    callFrame = window.DailyIframe.createCallObject({
+      videoSource: { facingMode: { ideal: 'environment' } }
+    });
 
     callFrame.on('joined-meeting', () => {
       // Récupère la piste vidéo locale
@@ -303,7 +306,8 @@ async function startSession() {
 function attachLocalVideo(track) {
   const v = document.getElementById('localVideo');
   if (v.srcObject instanceof MediaStream) {
-    if (!v.srcObject.getVideoTracks().length) v.srcObject.addTrack(track);
+    v.srcObject.getVideoTracks().forEach(t => v.srcObject.removeTrack(t));
+    v.srcObject.addTrack(track);
   } else {
     v.srcObject = new MediaStream([track]);
   }
@@ -379,6 +383,20 @@ function toggleCam() {
   const btn = document.getElementById('camBtn');
   btn.textContent = camOff ? '📵' : '📷';
   btn.classList.toggle('active', camOff);
+}
+
+let camDevices = [], camIndex = 0;
+async function flipCamera() {
+  if (!callFrame) return;
+  try {
+    if (!camDevices.length) {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      camDevices = all.filter(d => d.kind === 'videoinput');
+    }
+    if (camDevices.length < 2) return;
+    camIndex = (camIndex + 1) % camDevices.length;
+    await callFrame.setInputDevicesAsync({ videoDeviceId: camDevices[camIndex].deviceId });
+  } catch(e) { console.error('flip camera failed', e); }
 }
 
 // Cache tous les écrans (affiche la vidéo brute)
