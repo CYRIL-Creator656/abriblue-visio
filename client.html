@@ -156,6 +156,8 @@ body {
   color: rgba(200,217,241,0.7);
 }
 .ctrl-btn.active { background: rgba(239,122,145,0.2); color: #ef7a91; }
+.ctrl-btn.danger { background: rgba(239,68,68,0.25); color: #f87171; }
+.ctrl-btn.danger:active { background: #ef4444; color: white; }
 
 .hint {
   text-align: center;
@@ -204,10 +206,18 @@ body {
     <div class="error-sub" id="errorMsg">Vérifie ta connexion internet et réessaie, ou contacte ton technicien.</div>
     <button class="retry-btn" id="retryBtn">Réessayer</button>
   </div>
+
+  <!-- Écran 4 : session terminée -->
+  <div class="overlay-screen hidden gone" id="screenEnded">
+    <div class="screen-icon" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.2)">✅</div>
+    <div class="screen-title">Session terminée</div>
+    <div class="screen-sub">Merci d'avoir contacté Abriblue. N'hésitez pas à nous rappeler si besoin.</div>
+  </div>
 </div>
 
 <div class="bottom-bar">
   <button class="ctrl-btn" id="muteBtn" onclick="toggleMute()" title="Micro">🎤</button>
+  <button class="ctrl-btn danger" onclick="endSession()" title="Terminer la session">📵</button>
   <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Caméra">📷</button>
 </div>
 
@@ -274,6 +284,10 @@ async function startSession() {
         ms.addTrack(e.track);
         a.srcObject = ms;
       }
+    });
+
+    callFrame.on('participant-left', (e) => {
+      if (!e.participant.local) endSession();
     });
 
     callFrame.on('error', (e) => {
@@ -387,9 +401,13 @@ async function autoSwitchToRearCamera() {
   } catch(e) {}
 }
 
-// Cache tous les écrans (affiche la vidéo brute)
+function endSession() {
+  if (callFrame) { try { callFrame.leave(); callFrame.destroy(); } catch(e){} callFrame = null; }
+  showScreen('screenEnded');
+}
+
 function showScreen(id) {
-  ['screenJoin','screenConnect','screenError'].forEach(sid => {
+  ['screenJoin','screenConnect','screenError','screenEnded'].forEach(sid => {
     const el = document.getElementById(sid);
     if (sid === id) {
       el.classList.remove('gone');
