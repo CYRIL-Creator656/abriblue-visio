@@ -257,19 +257,13 @@ async function startSession() {
   initCanvas();
 
   try {
-    callFrame = window.DailyIframe.createCallObject({
-      videoSource: { facingMode: { ideal: 'environment' } }
-    });
+    callFrame = window.DailyIframe.createCallObject();
 
     callFrame.on('joined-meeting', () => {
-      // Récupère la piste vidéo locale
-      const tracks = callFrame.participants().local.tracks;
-      if (tracks.video && tracks.video.persistentTrack) {
-        attachLocalVideo(tracks.video.persistentTrack);
-      }
-      showScreen(null); // Cache tous les écrans → affiche la vidéo
+      showScreen(null);
       document.getElementById('statusDot').classList.remove('waiting');
       document.getElementById('statusLabel').textContent = 'En direct';
+      autoSwitchToRearCamera();
     });
 
     callFrame.on('track-started', (e) => {
@@ -386,6 +380,22 @@ function toggleCam() {
 }
 
 let camDevices = [], camIndex = 0;
+
+async function autoSwitchToRearCamera() {
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    const rearId = s.getVideoTracks()[0].getSettings().deviceId;
+    s.getTracks().forEach(t => t.stop());
+    if (!camDevices.length) {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      camDevices = all.filter(d => d.kind === 'videoinput');
+    }
+    const idx = camDevices.findIndex(d => d.deviceId === rearId);
+    if (idx >= 0) camIndex = idx;
+    await callFrame.setInputDevicesAsync({ videoDeviceId: rearId });
+  } catch(e) {}
+}
+
 async function flipCamera() {
   if (!callFrame) return;
   try {
@@ -396,7 +406,7 @@ async function flipCamera() {
     if (camDevices.length < 2) return;
     camIndex = (camIndex + 1) % camDevices.length;
     await callFrame.setInputDevicesAsync({ videoDeviceId: camDevices[camIndex].deviceId });
-  } catch(e) { console.error('flip camera failed', e); }
+  } catch(e) {}
 }
 
 // Cache tous les écrans (affiche la vidéo brute)
