@@ -310,6 +310,7 @@ input[type=range].sz::-webkit-slider-thumb { -webkit-appearance:none; width:13px
       <div class="video-container" id="videoContainer">
         <!-- Daily.js injecte la vidéo ici -->
         <div id="dailyContainer"></div>
+        <audio id="remoteAudio" autoplay></audio>
 
         <!-- Placeholder avant que le client rejoigne -->
         <div class="video-placeholder" id="videoPlaceholder">
@@ -470,6 +471,10 @@ async function joinDaily() {
       const v = document.getElementById('clientVideo');
       v.srcObject = new MediaStream([e.track]);
       document.getElementById('videoPlaceholder').classList.add('hidden');
+    } else if (!e.participant.local && e.track.kind === 'audio') {
+      const a = document.getElementById('remoteAudio');
+      if (!(a.srcObject instanceof MediaStream)) a.srcObject = new MediaStream();
+      a.srcObject.addTrack(e.track);
     }
   });
 
@@ -516,7 +521,10 @@ async function endCall() {
   if (callFrame) { try { callFrame.leave(); callFrame.destroy(); } catch(e){} callFrame = null; }
   const v = document.getElementById('clientVideo');
   if (v) v.srcObject = null;
+  const a = document.getElementById('remoteAudio');
+  if (a) a.srcObject = null;
   document.getElementById('videoPlaceholder').classList.remove('hidden');
+  stopTimer();
   showToast('📵 Session terminée');
   if (roomName) {
     try {
@@ -699,10 +707,15 @@ function showToast(t) {
   setTimeout(()=>el.classList.remove('show'),2800);
 }
 
-let secs=0, started=false;
+let secs=0, started=false, timerInterval=null;
 function startTimer() {
   if(started) return; started=true;
-  setInterval(()=>{ secs++; const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0'); document.getElementById('vcTimer').textContent=`${m}:${s}`; },1000);
+  timerInterval = setInterval(()=>{ secs++; const m=String(Math.floor(secs/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0'); document.getElementById('vcTimer').textContent=`${m}:${s}`; },1000);
+}
+function stopTimer() {
+  if(timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  started=false; secs=0;
+  document.getElementById('vcTimer').textContent='00:00';
 }
 </script>
 </body>
