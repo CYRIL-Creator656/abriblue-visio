@@ -403,6 +403,8 @@ async function autoSwitchToRearCamera() {
 
 function endSession() {
   if (callFrame) { try { callFrame.leave(); callFrame.destroy(); } catch(e){} callFrame = null; }
+  document.getElementById('statusDot').classList.add('waiting');
+  document.getElementById('statusLabel').textContent = 'Session terminée';
   showScreen('screenEnded');
 }
 
